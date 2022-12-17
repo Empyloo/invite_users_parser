@@ -1,0 +1,13 @@
+steps:
+  - name: 'python:3.10'
+    entrypoint: pip
+    args: ['install', '-r', 'requirements.txt']
+  - name: 'python:3.10'
+    entrypoint: functions-framework
+    args: ['--target', 'invite_users']
+    env:
+      - IS_PRODUCTION:'true'
+      - SUPABASE_URL:${_SUPABASE_URL}'
+      - SUPABASE_SERVICE_ROLE:${_SUPABASE_SERVICE_ROLE}'
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['functions', 'deploy', 'invite_users', '--gen2', '--runtime', 'python310', '--trigger-http']

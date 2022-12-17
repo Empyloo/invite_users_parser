@@ -1,1 +1,13 @@
-requirements.txt
+functions-framework
+supabase
+pandas
+tenacity
+pydantic
+asyncio
+python-dotenv
+loguru
+google-crc32c
+google-cloud-secret-manager
+pytest
+anyio[trio]
+pytest-asyncio
