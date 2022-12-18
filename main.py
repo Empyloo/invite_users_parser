@@ -23,7 +23,7 @@ import asyncio
 import pandas as pd
 import google_crc32c
 import functions_framework
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from loguru import logger
 from google.cloud import secretmanager
 from supabase import create_client, Client
@@ -83,8 +83,14 @@ def load_emails_from_csv(csv_file: str) -> List[str]:
         return []
 
 
-@retry(reraise=True, stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=60))
-async def invite_user(supabase_client: Client, email: str, data: dict, role: str = None) -> Optional[str]:
+@retry(
+    reraise=True,
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=1, max=60),
+)
+async def invite_user(
+    supabase_client: Client, email: str, data: dict, role: str = None
+) -> Optional[str]:
     """Invite the given user to join the given company and return the email if it fails."""
     if role:
         data["role"] = role
@@ -97,50 +103,65 @@ async def invite_user(supabase_client: Client, email: str, data: dict, role: str
         return email
 
 
-@functions_framework.http
-def invite_users(request):
+async def invite_users_adapter(request) -> Tuple[str, int]:
     """The entry point of the Cloud Function. This function is called by the
     Functions Framework to handle incoming requests."""
     jwt_token = request.headers.get("Authorization")
     if os.path.exists(".env"):
         dotenv.load_dotenv()
 
-    supabase: Client = create_client(
-        os.environ.get("SUPABASE_URL"), os.environ.get("SUPABASE_SERVICE_KEY")
-    )
-    user = verify_user(supabase_client=supabase, jwt_token=jwt_token)
-    if not user:
-        return "Unauthorized", 401
+    try:
+        supabase = create_client(
+            os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY")
+        )
+        user = verify_user(supabase, jwt_token)
+        if not user:
+            return "Unauthorized", 401
 
-    data = user["app_metadata"]
+        data = user["app_metadata"]
+    except Exception as error:
+        logger.error(error)
+        return "Failed to verify user", 500
 
     request_json = request.get_json()
     if not request_json:
-        # log invalid attempt
         return "Invalid request body", 400
 
-    if "csv_file" in request_json:
-        try:
-            emails = load_emails_from_csv(request_json["csv_file"])
-        except FileNotFoundError as error:
-            logger.error(error)
-            return "CSV file not found", 400
+    if "emails" in request_json and "csv_file" in request_json:
+        emails = [request_json["emails"]] + load_emails_from_csv(request_json["csv_file"])
+    
+    elif "csv_file" in request_json:
+        emails = load_emails_from_csv(request_json["csv_file"])
+        if not emails:
+            logger.error("CSV file not found, invalid or empty")
+            return "CSV file not found, invalid or empty", 400
+    
     elif "emails" in request_json:
         emails = request_json["emails"]
     else:
         return "No CSV file or emails provided", 400
 
     role = request_json.get("role")
-    try:
-        # save the emmails that error.
-        asyncio.gather(
-            *[
-                invite_user(supabase_client=supabase, email=email, data=data, role=role)
-                for email in emails
-            ]
-        )
-    except Exception as error:
-        logger.error(error)
-        return "Failed to invite users", 500
-    else:
-        return "Invitation sent", 200
+    emails_with_errors = []
+    tasks = []
+    for email in emails:
+        task = asyncio.create_task(invite_user(supabase, email, data, role))
+        tasks.append(task)
+
+    emails_with_errors = []
+    for task in asyncio.as_completed(tasks):
+        email = await task
+        try:
+            if email is not None:
+                emails_with_errors.append(email)
+        except Exception as error:
+            logger.error(f"Error inviting user {email}: {error}")
+            continue
+
+    if emails_with_errors:
+        return f"Invitation sent, with errors for emails: {emails_with_errors}", 200
+    return "Invitation sent", 200
+
+@functions_framework.http
+def invite_users(request):
+    return asyncio.run(invite_users_adapter(request))
