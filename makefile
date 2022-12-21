@@ -27,3 +27,7 @@ push:
 	git add .
 	git commit -m "update"
 	git push
+
+PHONY: pull
+pull:
+	git pull
