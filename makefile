@@ -21,3 +21,13 @@ run:
 PHONY: clean
 clean:
 	rm -rf venv
+
+PHONY: help
+help:
+	@echo "make activate-venv"
+	@echo "make deactivate-venv"
+	@echo "make test"
+	@echo "make install"
+	@echo "make run"
+	@echo "make clean"
+	@echo "make help"
