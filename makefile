@@ -17,7 +17,3 @@ install:
 PHONY: run
 run:
 	python main.py
-
-PHONY: clean
-clean:
-	rm -rf venv
