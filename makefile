@@ -31,7 +31,3 @@ push:
 PHONY: pull
 pull:
 	git pull
-
-purge:
-	git reset --hard
-	git clean -df
