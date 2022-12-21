@@ -26,7 +26,7 @@ pip install -r requirements.txt
 Once the required packages are installed, you can run the invite_users function locally using the Functions Framework command:
 
 ```
-functions-framework --target invite_users
+functions-framework --target invite_users --debug
 ```
 This will start the Functions Framework development
 

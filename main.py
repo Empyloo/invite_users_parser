@@ -63,7 +63,7 @@ def verify_user(supabase_client: Client, jwt_token: str) -> Optional[dict]:
     """Verify the given JWT token with the supabase auth service and return the
     user if it is valid."""
     try:
-        user = supabase_client.auth.api.get_user(jwt_token)
+        user = supabase_client.auth.api.get_user(jwt=jwt_token)
         if user:
             return user
         else:
@@ -165,3 +165,12 @@ async def invite_users_adapter(request) -> Tuple[str, int]:
 @functions_framework.http
 def invite_users(request):
     return asyncio.run(invite_users_adapter(request))
+
+
+# curl -X POST 'http://localhost:54321/auth/v1/token?grant_type=password' \
+# -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSJ9.vI9obAHOGyVVKa3pD--kJlyxp-Z2zV9UUMAhKpNLAcU" \
+# -H "Content-Type: application/json" \
+# -d '{
+#   "email": "supa_admn@empylo.com",
+#   "password": "super_admin_pswd"
+# }'
