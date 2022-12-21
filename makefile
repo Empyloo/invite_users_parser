@@ -31,3 +31,7 @@ help:
 	@echo "make run"
 	@echo "make clean"
 	@echo "make help"
+
+# Path: .gitignore
+venv
+__pycache__
