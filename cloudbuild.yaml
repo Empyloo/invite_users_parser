@@ -3,8 +3,6 @@ steps:
   - id: 'Get Cloud Function URL'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
-    waitFor:
-      - 'Deploy Cloud Function'
     args:
       - -c
       - |
