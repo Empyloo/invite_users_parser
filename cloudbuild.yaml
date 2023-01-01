@@ -33,6 +33,7 @@ steps:
       - --allow-unauthenticated
       - --gen2
       - --source=.
+      - --entry-point=invite_users
       - --service-account=${_SERVICE_ACCOUNT}
       - --set-env-vars=PROJECT_ID=${_PROJECT_ID}
       - --set-env-vars=PROJECT_NUMBER=${_PROJECT_NUMBER}
