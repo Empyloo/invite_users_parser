@@ -12,7 +12,7 @@ steps:
   - id: 'Deploy Cloud Function'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     waitFor:
-      - 'Deploy Cloud Run'
+      - 'Get Cloud Function URL'
     env:
       - 'INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
       - 'PROJECT_NUMBER=$_PROJECT_NUMBER'
