@@ -6,7 +6,7 @@ deactivate-venv:
 
 PHONY: test
 test:
-	python -m pytest
+	python -m pytest -vv
 
 PHONY: install
 install:

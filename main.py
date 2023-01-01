@@ -19,7 +19,6 @@ each user has to belong to a company.
 
 import os
 import dotenv
-import asyncio
 import pandas as pd
 import google_crc32c
 import functions_framework
@@ -27,8 +26,8 @@ from typing import List, Optional, Tuple
 from loguru import logger
 from google.cloud import secretmanager
 from supabase import create_client, Client
-from tenacity import retry, stop_after_attempt, wait_exponential
-from gotrue.types import User
+
+from src.task import create_task
 
 
 def get_secret_payload(
@@ -83,34 +82,15 @@ def load_emails_from_csv(csv_file: str) -> List[str]:
         return []
 
 
-@retry(
-    reraise=True,
-    stop=stop_after_attempt(3),
-    wait=wait_exponential(multiplier=1, max=60),
-)
-async def invite_user(
-    supabase_client: Client, email: str, data: dict, role: str = None
-) -> Optional[str]:
-    """Invite the given user to join the given company and return the email if it fails."""
-    if role:
-        data["role"] = role
-    else:
-        data["role"] = "user"
-    try:
-        await supabase_client.auth.api.invite_user_by_email(email=email, data=data)
-    except Exception as error:
-        logger.exception("Error inviting user %s: %s", email, error)
-        return email
-
-
-async def invite_users_adapter(request) -> Tuple[str, int]:
+@functions_framework.http
+def invite_users(request) -> Tuple[str, int]:
     """The entry point of the Cloud Function. This function is called by the
     Functions Framework to handle incoming requests."""
-    jwt_token = request.headers.get("Authorization")
     if os.path.exists(".env"):
         dotenv.load_dotenv()
 
     try:
+        jwt_token = request.headers.get("Authorization")
         supabase = create_client(
             os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY")
         )
@@ -128,40 +108,39 @@ async def invite_users_adapter(request) -> Tuple[str, int]:
         return "Invalid request body", 400
 
     if "emails" in request_json and "csv_file" in request_json:
-        emails = [request_json["emails"]] + load_emails_from_csv(request_json["csv_file"])
-    
+        emails = [request_json["emails"]] + load_emails_from_csv(
+            request_json["csv_file"]
+        )
+
     elif "csv_file" in request_json:
         emails = load_emails_from_csv(request_json["csv_file"])
         if not emails:
             logger.error("CSV file not found, invalid or empty")
             return "CSV file not found, invalid or empty", 400
-    
+
     elif "emails" in request_json:
         emails = request_json["emails"]
     else:
         return "No CSV file or emails provided", 400
 
+    queue_name = request_json.get("queue_name")
     role = request_json.get("role")
     emails_with_errors = []
-    tasks = []
     for email in emails:
-        task = asyncio.create_task(invite_user(supabase, email, data, role))
-        tasks.append(task)
+        payload = {
+            "email": email,
+            "company_id": data["company_id"],
+            "company_name": data["company_name"],
+            "role": role,
+        }
+        task = create_task(payload=payload, queue_name=queue_name)
+        if not task:
+            emails_with_errors.append(email)
 
-    emails_with_errors = []
-    for task in asyncio.as_completed(tasks):
-        email = await task
-        try:
-            if email is not None:
-                emails_with_errors.append(email)
-        except Exception as error:
-            logger.error(f"Error inviting user {email}: {error}")
-            continue
-
-    if emails_with_errors:
-        return f"Invitation sent, with errors for emails: {emails_with_errors}", 200
-    return "Invitation sent", 200
-
-@functions_framework.http
-def invite_users(request):
-    return asyncio.run(invite_users_adapter(request))
+    if len(emails) == len(emails_with_errors):
+        logger.error("Failed to invite all users")
+        return "Failed to invite all users", 500
+    elif emails_with_errors:
+        logger.error("Failed to invite some users: {}", emails_with_errors)
+        return "Failed to invite some users: {}".format(emails_with_errors), 500
+    return "Success", 200

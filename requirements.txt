@@ -11,3 +11,5 @@ google-cloud-secret-manager
 pytest
 anyio[trio]
 pytest-asyncio
+google-cloud-tasks
+protobuf

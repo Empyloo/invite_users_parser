@@ -20,6 +20,12 @@ The request must also include an Authorization header with a valid JWT token tha
 ## Development
 To develop this Cloud Function, you need to install the required packages using the requirements.txt file provided in this repository. You can install the packages using the following command:
 
+- `pyenv local 3.10.8`
+- `python -m venv venv`
+- `source venv/bin/activate`
+- `make install` - this will install the required packages
+- `make test` - to run the tests
+
 ```
 pip install -r requirements.txt
 ```
@@ -29,5 +35,3 @@ Once the required packages are installed, you can run the invite_users function 
 functions-framework --target invite_users
 ```
 This will start the Functions Framework development
-
-

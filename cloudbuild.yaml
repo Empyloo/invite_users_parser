@@ -1,13 +1,47 @@
 steps:
-  - name: 'python:3.10'
-    entrypoint: pip
-    args: ['install', '-r', 'requirements.txt']
-  - name: 'python:3.10'
-    entrypoint: functions-framework
-    args: ['--target', 'invite_users']
+  # Step 1: Get the URL of invite-user-function to save in the env of 2nd step
+  - id: 'Get Cloud Function URL'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    waitFor:
+      - 'Deploy Cloud Function'
+    args:
+      - -c
+      - |
+        gcloud functions describe tracker --gen2 --region=europe-west2 --format="value(serviceConfig.uri)" > /workspace/function_url.txt
+        cat /workspace/function_url.txt
+  # Step 2: Deploy Cloud Function
+  - id: 'Deploy Cloud Function'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    waitFor:
+      - 'Deploy Cloud Run'
     env:
-      - IS_PRODUCTION:'true'
-      - SUPABASE_URL:${_SUPABASE_URL}'
-      - SUPABASE_SERVICE_ROLE:${_SUPABASE_SERVICE_ROLE}'
-  - name: 'gcr.io/cloud-builders/gcloud'
-    args: ['functions', 'deploy', 'invite_users', '--gen2', '--runtime', 'python310', '--trigger-http']
+      - 'INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
+      - 'PROJECT_NUMBER=$_PROJECT_NUMBER'
+      - 'REGION=$_REGION'
+      - 'SUPABASE_URL=${_SUPABASE_URL}'
+      - 'SUPABASE_SERVICE_ROLE_SECRET_ID=${_SUPABASE_SERVICE_ROLE_SECRET_ID}'
+      - 'VERSION_ID=${_VERSION_ID}'
+      - 'SENTRY_DSN=${_SENTRY_DSN}'
+      - 'QUEUE_NAME=${_QUEUE_NAME}'
+    args:
+      - gcloud
+      - functions
+      - deploy
+      - invite-users-parser-function
+      - --region=europe-west2
+      - --runtime=python310
+      - --trigger-http
+      - --allow-unauthenticated
+      - --gen2
+      - --source=.
+      - --service-account=${_SERVICE_ACCOUNT}
+      - --set-env-vars=PROJECT_ID=${_PROJECT_ID}
+      - --set-env-vars=PROJECT_NUMBER=${PROJECT_NUMBER}
+      - --set-env-vars=REGION=${REGION}
+      - --set-env-vars=SUPABASE_URL=${SUPABASE_URL}
+      - --set-env-vars=SUPABASE_SERVICE_ROLE_SECRET_ID=${SUPABASE_SERVICE_ROLE_SECRET_ID}
+      - --set-env-vars=VERSION_ID=${VERSION_ID}
+      - --set-env-vars=SENTRY_DSN=${SENTRY_DSN}
+      - --set-env-vars=INVITE_USER_FUNCTION_URL=${INVITE_USER_FUNCTION_URL}
+      - --set-env-vars=QUEUE_NAME=${_QUEUE_NAME}
