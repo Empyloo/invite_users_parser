@@ -7,6 +7,7 @@ from main import (
     load_emails_from_csv,
     invite_users,
     get_secret_payload,
+    check_role,
 )
 
 
@@ -226,7 +227,7 @@ def test_invite_users_create_task_called_with_correct_payload(
             "email": "invited@email.com",
             "company_id": 1,
             "company_name": "test",
-            "role": None,
+            "role": "user",
         },
         "queue_name": None,
     }
@@ -281,3 +282,8 @@ def test_invite_users_failed_to_invite_some_users(
         "Failed to invite some users: ['test2@email.com']",
         500,
     )
+
+def test_check_role():
+    assert check_role("user") == True
+    assert check_role("admin") == True
+    assert check_role("invalid_role") == False

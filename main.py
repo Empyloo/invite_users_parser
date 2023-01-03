@@ -81,6 +81,20 @@ def load_emails_from_csv(csv_file: str) -> List[str]:
         logger.exception(error)
         return []
 
+def check_role(role: str) -> bool:
+    """Checks if the role is valid.
+
+    Args:
+        role: The role to check.
+    Returns:
+        True if the role is valid, False otherwise.
+    """
+    valid_roles = ["user", "admin"]
+    if role not in valid_roles:
+        logger.error("Invalid role: %s", role)
+        return False
+    return True
+
 
 @functions_framework.http
 def invite_users(request) -> Tuple[str, int]:
@@ -124,14 +138,15 @@ def invite_users(request) -> Tuple[str, int]:
         return "No CSV file or emails provided", 400
 
     queue_name = request_json.get("queue_name")
-    role = request_json.get("role")
+    role = request_json.get("role") # create an admin in a different function
+
     emails_with_errors = []
     for email in emails:
         payload = {
             "email": email,
             "company_id": data["company_id"],
             "company_name": data["company_name"],
-            "role": role,
+            "role": "user",
         }
         task = create_task(payload=payload, queue_name=queue_name)
         if not task:
