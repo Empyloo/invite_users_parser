@@ -142,10 +142,11 @@ def invite_users(request) -> Tuple[str, int]:
 
     emails_with_errors = []
     for email in emails:
+        # if company_id and company_name not in request_json use the ones from the JWT token
         payload = {
             "email": email,
-            "company_id": data["company_id"],
-            "company_name": data["company_name"],
+            "company_id": request_json.get("company_id") or data["company_id"],
+            "company_name": request_json.get("company_name") or data["company_name"],
             "role": "user",
         }
         task = create_task(payload=payload, queue_name=queue_name)
