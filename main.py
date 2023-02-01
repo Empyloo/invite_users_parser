@@ -81,6 +81,7 @@ def load_emails_from_csv(csv_file: str) -> List[str]:
         logger.exception(error)
         return []
 
+
 def check_role(role: str) -> bool:
     """Checks if the role is valid.
 
@@ -104,10 +105,11 @@ def invite_users(request) -> Tuple[str, int]:
         dotenv.load_dotenv()
 
     try:
-        jwt_token = request.headers.get("Authorization")
-        supabase = create_client(
-            os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_SERVICE_KEY")
+        supabase_key = get_secret_payload(
+            os.getenv("PROJECT_ID"), os.getenv("SUPABASE_SECRET"), os.getenv("VERSION_ID")
         )
+        jwt_token = request.headers.get("Authorization")
+        supabase = create_client(os.getenv("SUPABASE_URL"), supabase_key)
         user = verify_user(supabase, jwt_token)
         if not user:
             return "Unauthorized", 401
@@ -138,11 +140,10 @@ def invite_users(request) -> Tuple[str, int]:
         return "No CSV file or emails provided", 400
 
     queue_name = request_json.get("queue_name")
-    role = request_json.get("role") # create an admin in a different function
+    role = request_json.get("role")  # create an admin in a different function
 
     emails_with_errors = []
     for email in emails:
-        # if company_id and company_name not in request_json use the ones from the JWT token
         payload = {
             "email": email,
             "company_id": request_json.get("company_id") or data["company_id"],
