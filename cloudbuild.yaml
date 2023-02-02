@@ -1,7 +1,7 @@
 steps:
   # Test step
   - id: 'Test'
-    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    name: 'gcr.io/cloud-builders/make'
     entrypoint: 'bash'
     args:
       - -c
