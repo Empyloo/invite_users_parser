@@ -1,5 +1,9 @@
+import logging
 import requests
 from typing import Dict, Any
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class UserService:
     def __init__(self, base_url: str, anon_key: str):
@@ -8,6 +12,7 @@ class UserService:
         self.headers = {"apikey": self.anon_key}
     
     def verify_user(self, jwt_token: str):
+        logger.debug(f"Verifying user with jwt_token: {jwt_token}")
         self.headers["Authorization"] = f"Bearer {jwt_token}"
         response = requests.get(f"{self.base_url}/auth/v1/user", headers=self.headers, timeout=5)
         if response.status_code == 200:
