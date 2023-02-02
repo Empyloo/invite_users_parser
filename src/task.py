@@ -91,7 +91,7 @@ def create_task_with_service_account(
 
 def create_task(payload: dict, queue_name: str = None) -> tasks_v2.types.task.Task:
     """Calls create_task_with_service_account with a payload
-    
+
     Args:
         payload: The task HTTP request body.
         queue_name: The queue name. If None, the default queue is used.

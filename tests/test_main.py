@@ -283,10 +283,12 @@ def test_invite_users_failed_to_invite_some_users(
         500,
     )
 
+
 def test_check_role():
     assert check_role("user") == True
     assert check_role("admin") == True
     assert check_role("invalid_role") == False
+
 
 @patch("main.get_secret_payload")
 @patch("main.create_client")

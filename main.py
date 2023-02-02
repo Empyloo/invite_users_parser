@@ -106,8 +106,14 @@ def invite_users(request) -> Tuple[str, int]:
 
     try:
         supabase_key = get_secret_payload(
-            os.getenv("PROJECT_ID"), os.getenv("SUPABASE_SECRET"), os.getenv("VERSION_ID")
+            os.getenv("PROJECT_ID"),
+            os.getenv("SUPABASE_SERVICE_ROLE_SECRET_ID"),
+            os.getenv("VERSION_ID"),
         )
+    except Exception as error:
+        logger.error("Failed to get Supabase key: %s", error)
+        return "Failed to get Supabase key", 500
+    try:
         jwt_token = request.headers.get("Authorization")
         supabase = create_client(os.getenv("SUPABASE_URL"), supabase_key)
         user = verify_user(supabase, jwt_token)

@@ -1,5 +1,13 @@
 steps:
-  # Step 1: Get the URL of invite-user-function to save in the env of 2nd step
+  # Test step
+  - id: 'Test'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - -c
+      - |
+        make test
+  # Step 2: Get the URL of invite-user-function to save in the env of 2nd step
   - id: 'Get Cloud Function URL'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
@@ -8,7 +16,7 @@ steps:
       - |
         gcloud functions describe invite-user-function --gen2 --region=europe-west2 --format="value(serviceConfig.uri)" > /workspace/function_url.txt
         cat /workspace/function_url.txt
-  # Step 2: Deploy Cloud Function
+  # Step 3: Deploy Cloud Function
   - id: 'Deploy Cloud Function'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     waitFor:
