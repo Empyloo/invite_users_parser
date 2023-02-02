@@ -62,7 +62,7 @@ def verify_user(supabase_client: Client, jwt_token: str) -> Optional[dict]:
     """Verify the given JWT token with the supabase auth service and return the
     user if it is valid."""
     try:
-        user = supabase_client.auth.api.get_user(jwt_token)
+        user = supabase_client.auth.api.get_user(jwt=jwt_token)
         if user:
             return user
         else:
