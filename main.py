@@ -1,20 +1,5 @@
 # main.py
 """Cloud Function to invite users
-This script imports data classes, loguru, pandas, function_framework, 
-google_crc32c, and superbase, .Then it defines a function called verify user,
-which takes in a UWT token and  makes a request to superbase.auth.api.getUser
-and if a user is returned, then return the user and if the user is not returned,
-return none and log all of those operations using logger.logger.
-I also defined another function that takes in  a string that defines the
-location of a CSV file, then it uses pandas.read_csv to import or load the CSV
-file into memory and returns a list of the emails and  in the emails column
-and then the invite user function, which is the entry point of the Cloud Function.
-And this is taken by a functions framework as such. 
-This one calls verify user first and if the user is verified, it will look in
-the request body for either location of the CSV file or a list of emails.
-In the JWT token, there should be a company ID  in the app uses metadata so that
-company ID along with the email is used to invite a user. It's necessary because
-each user has to belong to a company.
 """
 
 import os
@@ -25,9 +10,9 @@ import functions_framework
 from typing import List, Optional, Tuple
 from loguru import logger
 from google.cloud import secretmanager
-from supabase import create_client, Client
 
 from src.task import create_task
+from src.user_service import UserService
 
 
 def get_secret_payload(
@@ -58,20 +43,6 @@ def get_secret_payload(
         return None
 
 
-def verify_user(supabase_client: Client, jwt_token: str) -> Optional[dict]:
-    """Verify the given JWT token with the supabase auth service and return the
-    user if it is valid."""
-    try:
-        user = supabase_client.auth.api.get_user(jwt=jwt_token)
-        if user:
-            return user
-        else:
-            return None
-    except Exception as error:
-        logger.exception("Failed to verify user: %s", error)
-        return None
-
-
 def load_emails_from_csv(csv_file: str) -> List[str]:
     """Load the emails from the given CSV file and return them as a list."""
     try:
@@ -82,44 +53,21 @@ def load_emails_from_csv(csv_file: str) -> List[str]:
         return []
 
 
-def check_role(role: str) -> bool:
-    """Checks if the role is valid.
-
-    Args:
-        role: The role to check.
-    Returns:
-        True if the role is valid, False otherwise.
-    """
-    valid_roles = ["user", "admin"]
-    if role not in valid_roles:
-        logger.error("Invalid role: %s", role)
-        return False
-    return True
-
-
 @functions_framework.http
 def invite_users(request) -> Tuple[str, int]:
     """The entry point of the Cloud Function. This function is called by the
     Functions Framework to handle incoming requests."""
     if os.path.exists(".env"):
         dotenv.load_dotenv()
-
-    # try:
-    #     supabase_key = get_secret_payload(
-    #         os.getenv("PROJECT_ID"),
-    #         os.getenv("SUPABASE_SERVICE_ROLE_SECRET_ID"),
-    #         os.getenv("VERSION_ID"),
-    #     )
-    # except Exception as error:
-    #     logger.error("Failed to get Supabase key: %s", error)
-    #     return "Failed to get Supabase key", 500
     try:
         jwt_token = request.headers.get("Authorization")
-        supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
-        user = verify_user(supabase, jwt_token)
+        db_url = os.getenv("SUPABASE_URL")
+        db_anon_key = os.getenv("SUPABASE_ANON_KEY")
+        user_service = UserService(db_url, db_anon_key)
+        user = user_service.verify_user(jwt_token)
         if not user:
+            logger.error("User not found, unauthorized %s", jwt_token)
             return "Unauthorized", 401
-
         data = user["app_metadata"]
     except Exception as error:
         logger.error(error)
@@ -146,7 +94,6 @@ def invite_users(request) -> Tuple[str, int]:
         return "No CSV file or emails provided", 400
 
     queue_name = request_json.get("queue_name")
-    role = request_json.get("role")  # create an admin in a different function
 
     emails_with_errors = []
     for email in emails:

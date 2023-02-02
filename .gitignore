@@ -130,3 +130,6 @@ dmypy.json
 
 # Local helpers
 script.sh
+
+# Experimental
+exp* 
