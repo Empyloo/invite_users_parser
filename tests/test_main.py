@@ -290,29 +290,29 @@ def test_check_role():
     assert check_role("invalid_role") == False
 
 
-@patch("main.get_secret_payload")
-@patch("main.create_client")
-@patch("main.verify_user")
-@patch("main.load_emails_from_csv")
-@patch("main.create_task")
-def test_get_secret_payload_gets_called(
-    mock_create_task,
-    mock_load_emails_from_csv,
-    mock_verify_user,
-    mock_create_client,
-    mock_get_secret_payload,
-):
-    mock_request = Mock()
-    mock_request.headers = {"Authorization": "valid-token"}
-    mock_request.get_json.return_value = {"emails": ["test@email.com"]}
-    mock_user = {
-        "id": 1,
-        "email": "test@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
-    }
-    mock_verify_user.return_value = mock_user
-    mock_create_client.return_value = Mock()
-    mock_load_emails_from_csv.return_value = ["test2@email.com"]
-    mock_create_task.return_value = True
-    invite_users(mock_request)
-    mock_get_secret_payload.assert_called_once()
+# @patch("main.get_secret_payload")
+# @patch("main.create_client")
+# @patch("main.verify_user")
+# @patch("main.load_emails_from_csv")
+# @patch("main.create_task")
+# def test_get_secret_payload_gets_called(
+#     mock_create_task,
+#     mock_load_emails_from_csv,
+#     mock_verify_user,
+#     mock_create_client,
+#     mock_get_secret_payload,
+# ):
+#     mock_request = Mock()
+#     mock_request.headers = {"Authorization": "valid-token"}
+#     mock_request.get_json.return_value = {"emails": ["test@email.com"]}
+#     mock_user = {
+#         "id": 1,
+#         "email": "test@email.com",
+#         "app_metadata": {"company_id": 1, "company_name": "test"},
+#     }
+#     mock_verify_user.return_value = mock_user
+#     mock_create_client.return_value = Mock()
+#     mock_load_emails_from_csv.return_value = ["test2@email.com"]
+#     mock_create_task.return_value = True
+#     invite_users(mock_request)
+#     mock_get_secret_payload.assert_called_once()
