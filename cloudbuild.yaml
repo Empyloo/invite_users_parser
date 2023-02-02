@@ -6,6 +6,7 @@ steps:
     args:
       - -c
       - |
+        make install
         make test
   # Step 2: Get the URL of invite-user-function to save in the env of 2nd step
   - id: 'Get Cloud Function URL'
