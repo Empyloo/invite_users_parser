@@ -68,7 +68,7 @@ def verify_user(supabase_client: Client, jwt_token: str) -> Optional[dict]:
         else:
             return None
     except Exception as error:
-        logger.exception(error)
+        logger.exception("Failed to verify user: %s", error)
         return None
 
 
@@ -104,18 +104,18 @@ def invite_users(request) -> Tuple[str, int]:
     if os.path.exists(".env"):
         dotenv.load_dotenv()
 
-    try:
-        supabase_key = get_secret_payload(
-            os.getenv("PROJECT_ID"),
-            os.getenv("SUPABASE_SERVICE_ROLE_SECRET_ID"),
-            os.getenv("VERSION_ID"),
-        )
-    except Exception as error:
-        logger.error("Failed to get Supabase key: %s", error)
-        return "Failed to get Supabase key", 500
+    # try:
+    #     supabase_key = get_secret_payload(
+    #         os.getenv("PROJECT_ID"),
+    #         os.getenv("SUPABASE_SERVICE_ROLE_SECRET_ID"),
+    #         os.getenv("VERSION_ID"),
+    #     )
+    # except Exception as error:
+    #     logger.error("Failed to get Supabase key: %s", error)
+    #     return "Failed to get Supabase key", 500
     try:
         jwt_token = request.headers.get("Authorization")
-        supabase = create_client(os.getenv("SUPABASE_URL"), supabase_key)
+        supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_ANON_KEY"))
         user = verify_user(supabase, jwt_token)
         if not user:
             return "Unauthorized", 401

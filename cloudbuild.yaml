@@ -27,6 +27,7 @@ steps:
       - 'PROJECT_NUMBER=$_PROJECT_NUMBER'
       - 'REGION=$_REGION'
       - 'SUPABASE_URL=${_SUPABASE_URL}'
+      - 'SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY}'
       - 'SUPABASE_SERVICE_ROLE_SECRET_ID=${_SUPABASE_SERVICE_ROLE_SECRET_ID}'
       - 'VERSION_ID=${_VERSION_ID}'
       - 'SENTRY_DSN=${_SENTRY_DSN}'
@@ -48,6 +49,7 @@ steps:
       - --set-env-vars=PROJECT_NUMBER=${_PROJECT_NUMBER}
       - --set-env-vars=REGION=${_REGION}
       - --set-env-vars=SUPABASE_URL=${_SUPABASE_URL}
+      - --set-env-vars=SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY}
       - --set-env-vars=SUPABASE_SERVICE_ROLE_SECRET_ID=${_SUPABASE_SERVICE_ROLE_SECRET_ID}
       - --set-env-vars=VERSION_ID=${_VERSION_ID}
       - --set-env-vars=SENTRY_DSN=${_SENTRY_DSN}
