@@ -1,13 +1,13 @@
 steps:
   # Test step
   - id: 'Test'
-    name: 'gcr.io/cloud-builders/make'
+    name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: 'bash'
     args:
       - -c
       - |
-        make install
-        make test
+        python -m pip install -r requirements.txt
+        python -m pytest -vv
   # Step 2: Get the URL of invite-user-function to save in the env of 2nd step
   - id: 'Get Cloud Function URL'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
