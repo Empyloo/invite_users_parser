@@ -63,8 +63,8 @@ def invite_users(request) -> Tuple[str, int]:
         jwt_token = request.headers.get("Authorization")
         db_url = os.getenv("SUPABASE_URL")
         db_anon_key = os.getenv("SUPABASE_ANON_KEY")
-        logger.info("db_url: %s", db_url)
-        logger.info("db_anon_key: %s", db_anon_key)
+        logger.info("db_url: %s" % db_url)
+        logger.info("db_anon_key: %s" % db_anon_key)
         user_service = UserService(db_url, db_anon_key)
         user = user_service.verify_user(jwt_token)
         if not user:
