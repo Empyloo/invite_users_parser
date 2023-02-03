@@ -5,6 +5,7 @@ from main import (
     load_emails_from_csv,
     invite_users,
     get_secret_payload,
+    check_email,
 )
 
 
@@ -60,13 +61,15 @@ def test_load_emails_from_csv_exception():
         assert emails == []
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_valid_request(
     mock_create_task,
     mock_load_emails_from_csv,
     mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -79,14 +82,19 @@ def test_invite_users_valid_request(
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = ["test2@email.com"]
     mock_create_task.return_value = True
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == ("Success", 200)
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_unverified_user(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization  ": "invalid"}
@@ -96,16 +104,22 @@ def test_invite_users_unverified_user(
         "email": "invalid_admin@test.com",
         "app_metadata": {"company_id": 1, "company_name": "test"},
     }
-    mock_verify_user.return_value = None
+    mock_verify_user.return_value = {"error": "Unauthorized"}
     mock_load_emails_from_csv.return_value = ["invalid2@test.com"]
+    mock_create_task.return_value = True
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == ("Unauthorized", 401)
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_invalid_request_body(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -117,14 +131,20 @@ def test_invite_users_invalid_request_body(
     }
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = ["test_csv@email.com"]
+    mock_create_task.return_value = True
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == ("Invalid request body", 400)
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_no_emails_or_csv_file(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -136,14 +156,20 @@ def test_invite_users_no_emails_or_csv_file(
     }
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = []
+    mock_create_task.return_value = True
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == ("Invalid request body", 400)
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_csv_file_not_found(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -155,14 +181,20 @@ def test_invite_users_csv_file_not_found(
     }
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = []
+    mock_create_task.return_value = True
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == ("CSV file not found, invalid or empty", 400)
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_no_csv_file_or_emails(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -173,14 +205,19 @@ def test_invite_users_no_csv_file_or_emails(
         "app_metadata": {"company_id": 1, "company_name": "test"},
     }
     mock_verify_user.return_value = mock_user
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == ("No CSV file or emails provided", 400)
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_create_task_called_with_correct_payload(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -192,6 +229,7 @@ def test_invite_users_create_task_called_with_correct_payload(
     }
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = []
+    mock_get_secret_payload.return_value = "valid-secret"
     invite_users(mock_request)
     assert mock_create_task.call_count == 1
     assert mock_create_task.call_args.kwargs == {
@@ -205,11 +243,15 @@ def test_invite_users_create_task_called_with_correct_payload(
     }
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_failed_to_invite_all_users(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -224,14 +266,19 @@ def test_invite_users_failed_to_invite_all_users(
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = []
     mock_create_task.return_value = False
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == ("Failed to invite all users", 500)
 
 
-@patch("main.UserService.verify_user")
+@patch("main.get_secret_payload")
+@patch("main.AdminUserService.verify_user")
 @patch("main.load_emails_from_csv")
 @patch("main.create_task")
 def test_invite_users_failed_to_invite_some_users(
-    mock_create_task, mock_load_emails_from_csv, mock_verify_user
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_verify_user,
+    mock_get_secret_payload,
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
@@ -246,7 +293,36 @@ def test_invite_users_failed_to_invite_some_users(
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = []
     mock_create_task.side_effect = [True, False]
+    mock_get_secret_payload.return_value = "valid-secret"
     assert invite_users(mock_request) == (
         "Failed to invite some users: ['test2@email.com']",
         500,
     )
+
+
+@patch("main.get_secret_payload")
+@patch("main.load_emails_from_csv")
+@patch("main.create_task")
+def test_get_secret_payload_gets_called(
+    mock_create_task,
+    mock_load_emails_from_csv,
+    mock_get_secret_payload,
+):
+    mock_request = Mock()
+    mock_request.headers = {"Authorization": "valid-token"}
+    mock_request.get_json.return_value = {"emails": ["test@email.com"]}
+    mock_user = {
+        "id": 1,
+        "email": "test@email.com",
+        "app_metadata": {"company_id": 1, "company_name": "test"},
+    }
+    mock_load_emails_from_csv.return_value = ["test2@email.com"]
+    mock_create_task.return_value = True
+    invite_users(mock_request)
+    mock_get_secret_payload.assert_called_once()
+
+
+def test_check_email():
+    """Test check_email function"""
+    assert check_email("t.test@empylo.com") is True
+    assert check_email("t.email@lets.com") is False

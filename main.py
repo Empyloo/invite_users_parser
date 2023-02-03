@@ -12,7 +12,7 @@ from loguru import logger
 from google.cloud import secretmanager
 
 from src.task import create_task
-from src.user_service import UserService
+from src.user_service import AdminUserService
 
 
 def get_secret_payload(
@@ -53,6 +53,14 @@ def load_emails_from_csv(csv_file: str) -> List[str]:
         return []
 
 
+def check_email(email: str) -> bool:
+    """Check if the given email is an Empylo email (ends with @empylo.com).
+    Returns:
+        bool: True if the email it is an Empylo email, False otherwise.
+    """
+    return email.endswith("@empylo.com")
+
+
 @functions_framework.http
 def invite_users(request) -> Tuple[str, int]:
     """The entry point of the Cloud Function. This function is called by the
@@ -60,16 +68,23 @@ def invite_users(request) -> Tuple[str, int]:
     if os.path.exists(".env"):
         dotenv.load_dotenv()
     try:
+        service_key = get_secret_payload(
+            os.getenv("PROJECT_ID"),
+            os.getenv("SUPABASE_SERVICE_ROLE_SECRET_ID"),
+            os.getenv("VERSION_ID"),
+        )
+    except Exception as error:
+        logger.error("Failed to get Supabase key: %s", error)
+        return "Failed to get Supabase key", 500
+    try:
         jwt_token = request.headers.get("Authorization")
         db_url = os.getenv("SUPABASE_URL")
         db_anon_key = os.getenv("SUPABASE_ANON_KEY")
-        logger.info("db_url: %s" % db_url)
-        logger.info("db_anon_key: %s" % db_anon_key)
-        user_service = UserService(db_url, db_anon_key)
+        user_service = AdminUserService(db_url, db_anon_key, service_key)
         user = user_service.verify_user(jwt_token)
-        if not user:
-            logger.error("User not found, unauthorized %s", jwt_token)
-            return "Unauthorized", 401
+        if "error" in user:
+            logger.error("%s %s" % (user["error"], jwt_token))
+            return user["error"], 401
         data = user["app_metadata"]
     except Exception as error:
         logger.error(error)
