@@ -95,11 +95,11 @@ def invite_users(request) -> Tuple[str, int]:
         db_url = os.getenv("SUPABASE_URL")
         db_anon_key = os.getenv("SUPABASE_ANON_KEY")
         user_service = AdminUserService(db_url, db_anon_key, service_key)
-        user = user_service.verify_user(jwt_token)
-        if "error" in user:
-            logger.error("%s %s" % (user["error"], jwt_token))
-            return user["error"], 401
-        data = user["app_metadata"]
+        user_metadata = user_service.verify_user(jwt_token)
+        if "error" in user_metadata:
+            logger.error("%s %s" % (user_metadata["error"], jwt_token))
+            return user_metadata["error"], 401
+        data = user_metadata
     except Exception as error:
         logger.error(error)
         return "Failed to verify user", 500
