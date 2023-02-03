@@ -23,7 +23,7 @@ steps:
     waitFor:
       - 'Get Cloud Function URL'
     env:
-      - 'INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
+      - '_INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
       - 'PROJECT_NUMBER=$_PROJECT_NUMBER'
       - 'REGION=$_REGION'
       - 'SUPABASE_URL=${_SUPABASE_URL}'
@@ -53,5 +53,5 @@ steps:
       - --set-env-vars=SUPABASE_SERVICE_ROLE_SECRET_ID=${_SUPABASE_SERVICE_ROLE_SECRET_ID}
       - --set-env-vars=VERSION_ID=${_VERSION_ID}
       - --set-env-vars=SENTRY_DSN=${_SENTRY_DSN}
-      - --set-env-vars=INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
+      - --set-env-vars=INVITE_USER_FUNCTION_URL=${_INVITE_USER_FUNCTION_URL}'
       - --set-env-vars=QUEUE_NAME=${_QUEUE_NAME}
