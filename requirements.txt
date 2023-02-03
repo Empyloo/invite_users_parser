@@ -14,3 +14,4 @@ pytest-asyncio
 google-cloud-tasks
 protobuf
 freezegun
+PyJWT
