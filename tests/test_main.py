@@ -9,27 +9,20 @@ from main import (
     check_email,
 )
 
+
 def test_extract_token_from_header():
-    headers = {
-        "Authorization": "Bearer my-token"
-    }
+    headers = {"Authorization": "Bearer my-token"}
     assert extract_token_from_header(headers) == "my-token"
 
-    headers = {
-        "Authorization": "Bearer  my-token  "
-    }
+    headers = {"Authorization": "Bearer  my-token  "}
     assert extract_token_from_header(headers) == None
     headers = {}
     assert extract_token_from_header(headers) == None
 
-    headers = {
-        "Authorization": "Basic my-token"
-    }
+    headers = {"Authorization": "Basic my-token"}
     assert extract_token_from_header(headers) == None
 
-    headers = {
-        "Authorization": "Bearermy-token"
-    }
+    headers = {"Authorization": "Bearermy-token"}
     assert extract_token_from_header(headers) == None
 
 
@@ -98,12 +91,12 @@ def test_invite_users_valid_request(
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
     mock_request.get_json.return_value = {"emails": ["test@email.com"]}
-    mock_user = {
-        "id": 1,
-        "email": "test@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+    mock_user_metadata = {
+        "company_id": "test-company-id",
+        "company_name": "test-company-name",
+        "role": "super_admin",
     }
-    mock_verify_user.return_value = mock_user
+    mock_verify_user.return_value = mock_user_metadata
     mock_load_emails_from_csv.return_value = ["test2@email.com"]
     mock_create_task.return_value = True
     mock_get_secret_payload.return_value = "valid-secret"
@@ -126,7 +119,7 @@ def test_invite_users_unverified_user(
     mock_user = {
         "id": 1,
         "email": "invalid_admin@test.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+        "user_metadata": {"company_id": 1, "company_name": "test"},
     }
     mock_verify_user.return_value = {"error": "Unauthorized"}
     mock_load_emails_from_csv.return_value = ["invalid2@test.com"]
@@ -151,7 +144,7 @@ def test_invite_users_invalid_request_body(
     mock_user = {
         "id": 1,
         "email": "test@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+        "user_metadata": {"company_id": 1, "company_name": "test"},
     }
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = ["test_csv@email.com"]
@@ -176,7 +169,7 @@ def test_invite_users_no_emails_or_csv_file(
     mock_user = {
         "id": 1,
         "email": "test@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+        "user_metadata": {"company_id": 1, "company_name": "test"},
     }
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = []
@@ -201,7 +194,7 @@ def test_invite_users_csv_file_not_found(
     mock_user = {
         "id": 1,
         "email": "test@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+        "user_metadata": {"company_id": 1, "company_name": "test"},
     }
     mock_verify_user.return_value = mock_user
     mock_load_emails_from_csv.return_value = []
@@ -226,7 +219,7 @@ def test_invite_users_no_csv_file_or_emails(
     mock_user = {
         "id": 1,
         "email": "test@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+        "user_metadata": {"company_id": 1, "company_name": "test"},
     }
     mock_verify_user.return_value = mock_user
     mock_get_secret_payload.return_value = "valid-secret"
@@ -246,12 +239,12 @@ def test_invite_users_create_task_called_with_correct_payload(
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
     mock_request.get_json.return_value = {"emails": ["invited@email.com"]}
-    mock_user = {
-        "id": 1,
-        "email": "test@user.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+    mock_user_metadata = {
+        "company_id": "test-company-id",
+        "company_name": "test-company-name",
+        "role": "user",
     }
-    mock_verify_user.return_value = mock_user
+    mock_verify_user.return_value = mock_user_metadata
     mock_load_emails_from_csv.return_value = []
     mock_get_secret_payload.return_value = "valid-secret"
     invite_users(mock_request)
@@ -259,8 +252,8 @@ def test_invite_users_create_task_called_with_correct_payload(
     assert mock_create_task.call_args.kwargs == {
         "payload": {
             "email": "invited@email.com",
-            "company_id": 1,
-            "company_name": "test",
+            "company_id": "test-company-id",
+            "company_name": "test-company-name",
             "role": "user",
         },
         "queue_name": None,
@@ -282,12 +275,12 @@ def test_invite_users_failed_to_invite_all_users(
     mock_request.get_json.return_value = {
         "emails": ["test@email.com", "test2@email.com"]
     }
-    mock_user = {
-        "id": 1,
-        "email": "test_admin@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+    mock_user_metadata = {
+        "company_id": "test-company-id",
+        "company_name": "test-company-name",
+        "role": "super_admin",
     }
-    mock_verify_user.return_value = mock_user
+    mock_verify_user.return_value = mock_user_metadata
     mock_load_emails_from_csv.return_value = []
     mock_create_task.return_value = False
     mock_get_secret_payload.return_value = "valid-secret"
@@ -309,12 +302,12 @@ def test_invite_users_failed_to_invite_some_users(
     mock_request.get_json.return_value = {
         "emails": ["test@email.com", "test2@email.com"]
     }
-    mock_user = {
-        "id": 1,
-        "email": "test_admin@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+    mock_user_metadata = {
+        "company_id": "test-company-id",
+        "company_name": "test-company-name",
+        "role": "super_admin",
     }
-    mock_verify_user.return_value = mock_user
+    mock_verify_user.return_value = mock_user_metadata
     mock_load_emails_from_csv.return_value = []
     mock_create_task.side_effect = [True, False]
     mock_get_secret_payload.return_value = "valid-secret"
@@ -338,7 +331,7 @@ def test_get_secret_payload_gets_called(
     mock_user = {
         "id": 1,
         "email": "test@email.com",
-        "app_metadata": {"company_id": 1, "company_name": "test"},
+        "user_metadata": {"company_id": 1, "company_name": "test"},
     }
     mock_load_emails_from_csv.return_value = ["test2@email.com"]
     mock_create_task.return_value = True
