@@ -43,7 +43,7 @@ def create_task_with_service_account(
 
         missing_env_variable = check_variables()
         if missing_env_variable:
-            logger.error("Missing environment variables %s", missing_env_variable)
+            logger.error("Missing environment variables %s" % missing_env_variable)
             return None
 
         if queue_name is None:

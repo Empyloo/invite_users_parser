@@ -15,15 +15,14 @@ steps:
     args:
       - -c
       - |
-        gcloud functions describe invite-user-function --gen2 --region=europe-west2 --format="value(serviceConfig.uri)" >> /workspace/function_url.txt
-        cat /workspace/function_url.txt
+        export _INVITE_USER_FUNCTION_URL=$(gcloud functions describe invite-user-function --gen2 --region=europe-west2 --format="value(serviceConfig.uri)")
   # Step 3: Deploy Cloud Function
   - id: 'Deploy Cloud Function'
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     waitFor:
       - 'Get Cloud Function URL'
     env:
-      - '_INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
+      - 'INVITE_USER_FUNCTION_URL=$_INVITE_USER_FUNCTION_URL'
       - 'PROJECT_NUMBER=$_PROJECT_NUMBER'
       - 'REGION=$_REGION'
       - 'SUPABASE_URL=${_SUPABASE_URL}'
