@@ -2,11 +2,35 @@ import pytest
 import pandas as pd
 from unittest.mock import patch, Mock
 from main import (
+    extract_token_from_header,
     load_emails_from_csv,
     invite_users,
     get_secret_payload,
     check_email,
 )
+
+def test_extract_token_from_header():
+    headers = {
+        "Authorization": "Bearer my-token"
+    }
+    assert extract_token_from_header(headers) == "my-token"
+
+    headers = {
+        "Authorization": "Bearer  my-token  "
+    }
+    assert extract_token_from_header(headers) == None
+    headers = {}
+    assert extract_token_from_header(headers) == None
+
+    headers = {
+        "Authorization": "Basic my-token"
+    }
+    assert extract_token_from_header(headers) == None
+
+    headers = {
+        "Authorization": "Bearermy-token"
+    }
+    assert extract_token_from_header(headers) == None
 
 
 @patch("google.cloud.secretmanager.SecretManagerServiceClient")

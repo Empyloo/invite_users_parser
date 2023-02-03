@@ -15,6 +15,20 @@ from src.task import create_task
 from src.user_service import AdminUserService
 
 
+def extract_token_from_header(headers) -> Optional[str]:
+    authorization_header = headers.get("Authorization")
+    if not authorization_header:
+        logger.error("No Authorization header found: %s" % headers)
+        return None
+
+    header_parts = authorization_header.split(" ")
+    if len(header_parts) != 2 or header_parts[0] != "Bearer":
+        logger.error("Invalid Authorization header, more than 2 parts: %s" % headers)
+        return None
+
+    return header_parts[1]
+
+
 def get_secret_payload(
     project_id: str, secret_id: str, version_id: str
 ) -> Optional[str]:
@@ -77,7 +91,7 @@ def invite_users(request) -> Tuple[str, int]:
         logger.error("Failed to get Supabase key: %s", error)
         return "Failed to get Supabase key", 500
     try:
-        jwt_token = request.headers.get("Authorization")
+        jwt_token = extract_token_from_header(request.headers)
         db_url = os.getenv("SUPABASE_URL")
         db_anon_key = os.getenv("SUPABASE_ANON_KEY")
         user_service = AdminUserService(db_url, db_anon_key, service_key)
