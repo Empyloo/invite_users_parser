@@ -22,6 +22,7 @@ steps:
     name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     waitFor:
       - 'Get Cloud Function URL'
+    entrypoint: 'bash'
     env:
       - '_INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
       - 'PROJECT_NUMBER=$_PROJECT_NUMBER'
@@ -33,25 +34,24 @@ steps:
       - 'SENTRY_DSN=${_SENTRY_DSN}'
       - 'QUEUE_NAME=${_QUEUE_NAME}'
     args:
-      - gcloud
-      - functions
-      - deploy
-      - invite-users-parser-function
-      - --region=europe-west2
-      - --runtime=python310
-      - --trigger-http
-      - --allow-unauthenticated
-      - --gen2
-      - --source=.
-      - --entry-point=invite_users
-      - --service-account=${_SERVICE_ACCOUNT}
-      - --set-env-vars=PROJECT_ID=${_PROJECT_ID}
-      - --set-env-vars=PROJECT_NUMBER=${_PROJECT_NUMBER}
-      - --set-env-vars=REGION=${_REGION}
-      - --set-env-vars=SUPABASE_URL=${_SUPABASE_URL}
-      - --set-env-vars=SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY}
-      - --set-env-vars=SUPABASE_SERVICE_ROLE_SECRET_ID=${_SUPABASE_SERVICE_ROLE_SECRET_ID}
-      - --set-env-vars=VERSION_ID=${_VERSION_ID}
-      - --set-env-vars=SENTRY_DSN=${_SENTRY_DSN}
-      - --set-env-vars=INVITE_USER_FUNCTION_URL=${_INVITE_USER_FUNCTION_URL}
-      - --set-env-vars=QUEUE_NAME=${_QUEUE_NAME}
+      - -c
+      - |
+        gcloud functions deploy invite-users-parser-function \
+          --region=europe-west2 \
+          --runtime=python310 \
+          --trigger-http \
+          --allow-unauthenticated \
+          --gen2 \
+          --source=. \
+          --entry-point=invite_users \
+          --service-account=${_SERVICE_ACCOUNT} \
+          --set-env-vars=PROJECT_ID=${_PROJECT_ID} \
+          --set-env-vars=PROJECT_NUMBER=${_PROJECT_NUMBER} \
+          --set-env-vars=REGION=${_REGION} \
+          --set-env-vars=SUPABASE_URL=${_SUPABASE_URL} \
+          --set-env-vars=SUPABASE_ANON_KEY=${_SUPABASE_ANON_KEY} \
+          --set-env-vars=SUPABASE_SERVICE_ROLE_SECRET_ID=${_SUPABASE_SERVICE_ROLE_SECRET_ID} \
+          --set-env-vars=VERSION_ID=${_VERSION_ID} \
+          --set-env-vars=SENTRY_DSN=${_SENTRY_DSN} \
+          --set-env-vars=INVITE_USER_FUNCTION_URL=${_INVITE_USER_FUNCTION_URL} \
+          --set-env-vars=QUEUE_NAME=${_QUEUE_NAME}
