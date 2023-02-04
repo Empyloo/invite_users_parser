@@ -40,18 +40,16 @@ def create_task_with_service_account(
         url = os.getenv("INVITE_USER_FUNCTION_URL")
         audience = os.getenv("INVITE_USER_FUNCTION_URL")
         service_account_email = os.getenv("SERVICE_ACCOUNT")
-        queue = os.getenv("QUEUE_NAME")
 
         missing_env_variable = check_variables()
         if missing_env_variable:
             logger.error("Missing environment variables %s" % missing_env_variable)
             return None
 
-        client = tasks_v2.CloudTasksClient()
-        # Construct the fully qualified queue name.
-        parent = client.queue_path(project, location, queue)
+        queue_name = queue_name or os.getenv("QUEUE_NAME")
 
-        # Construct the request body.
+        client = tasks_v2.CloudTasksClient()
+        parent = client.queue_path(project, location, queue_name)
         task = {
             "http_request": {
                 "http_method": tasks_v2.HttpMethod.POST,
@@ -66,11 +64,8 @@ def create_task_with_service_account(
         if payload is not None:
             # The API expects a payload of type bytes.
             converted_payload = payload.encode()
-
-            # Add the payload to the request.
             task["http_request"]["body"] = converted_payload
 
-        # Use the client to build and send the task.
         response = client.create_task(request={"parent": parent, "task": task})
 
         logger.info("Created task {}".format(response.name))
