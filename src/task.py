@@ -40,16 +40,12 @@ def create_task_with_service_account(
         url = os.getenv("INVITE_USER_FUNCTION_URL")
         audience = os.getenv("INVITE_USER_FUNCTION_URL")
         service_account_email = os.getenv("SERVICE_ACCOUNT")
+        queue = os.getenv("QUEUE_NAME")
 
         missing_env_variable = check_variables()
         if missing_env_variable:
             logger.error("Missing environment variables %s" % missing_env_variable)
             return None
-
-        if queue_name is None:
-            queue = os.getenv("QUEUE_NAME")
-        else:
-            queue = queue_name
 
         client = tasks_v2.CloudTasksClient()
         # Construct the fully qualified queue name.
