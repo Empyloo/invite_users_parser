@@ -15,7 +15,7 @@ steps:
     args:
       - -c
       - |
-        gcloud functions describe invite-user-function --gen2 --region=europe-west2 --format="value(serviceConfig.uri)" > /workspace/function_url.txt
+        gcloud functions describe invite-user-function --gen2 --region=europe-west2 --format="value(serviceConfig.uri)" > _INVITE_USER_FUNCTION_URL
         cat /workspace/function_url.txt
   # Step 3: Deploy Cloud Function
   - id: 'Deploy Cloud Function'
@@ -24,7 +24,6 @@ steps:
       - 'Get Cloud Function URL'
     entrypoint: 'bash'
     env:
-      - '_INVITE_USER_FUNCTION_URL=$(cat /workspace/function_url.txt)'
       - 'PROJECT_NUMBER=$_PROJECT_NUMBER'
       - 'REGION=$_REGION'
       - 'SUPABASE_URL=${_SUPABASE_URL}'
