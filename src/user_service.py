@@ -84,10 +84,10 @@ class AdminUserService:
             return {"error": "User id does not exis."}
 
         user = response.json()
-        if user.get("user_metadata") is None:
-            return {"error": "User does not have user metadata"}
+        if user.get("app_metadata") is None:
+            return {"error": "User does not have app metadata"}
 
-        user_metadata = user.get("user_metadata")
+        user_metadata = user.get("app_metadata")
         if user_metadata.get("role") != "super_admin":
             return {"error": "User is not a super admin"}
         return user_metadata

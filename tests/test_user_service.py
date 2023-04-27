@@ -63,7 +63,7 @@ def test_verify_user(mock_get, user_service):
     mock_get.return_value.status_code = 200
     mock_get.return_value.json.return_value = {
         "user_id": "user_id",
-        "user_metadata": {"role": "super_admin"},
+        "app_metadata": {"role": "super_admin"},
     }
     with freezegun.freeze_time("2022-01-01"):
         jwt_token = jwt.encode(
@@ -95,7 +95,7 @@ def test_user_metadata_returns_none(mock_get, user_service):
     mock_get.return_value.json.return_value = {"user_id": "user_id"}
     response = user_service.get_user_by_id("user_id")
     assert response.status_code == 200
-    assert response.json().get("user_metadata") is None
+    assert response.json().get("app_metadata") is None
 
 
 @patch("requests.get")
@@ -103,7 +103,7 @@ def test_user_not_super_admin(mock_get, user_service):
     mock_get.return_value.status_code = 200
     mock_get.return_value.json.return_value = {
         "user_id": "user_id",
-        "user_metadata": {"role": "admin"},
+        "app_metadata": {"role": "admin"},
     }
     with freezegun.freeze_time("2022-01-01"):
         jwt_token = jwt.encode(
