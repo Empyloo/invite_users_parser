@@ -15,3 +15,4 @@ google-cloud-tasks
 protobuf
 freezegun
 PyJWT
+httpx

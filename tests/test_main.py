@@ -256,7 +256,7 @@ def test_invite_users_create_task_called_with_correct_payload(
             "company_name": "test-company-name",
             "role": "user",
         },
-        "queue_name": None,
+        "queue_name": 'invite-user-task-queue',
     }
 
 

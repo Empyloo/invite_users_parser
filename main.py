@@ -13,6 +13,8 @@ from google.cloud import secretmanager
 
 from src.task import create_task
 from src.user_service import AdminUserService
+from src.rest_service import RestService
+from src.save_errors import save_errors
 
 
 def extract_token_from_header(headers) -> Optional[str]:
@@ -94,6 +96,7 @@ def invite_users(request) -> Tuple[str, int]:
         jwt_token = extract_token_from_header(request.headers)
         db_url = os.getenv("SUPABASE_URL")
         db_anon_key = os.getenv("SUPABASE_ANON_KEY")
+        rest_service = RestService(db_url, db_anon_key, service_key)
         user_service = AdminUserService(db_url, db_anon_key, service_key)
         user_metadata = user_service.verify_user(jwt_token)
         if "error" in user_metadata:
@@ -125,6 +128,39 @@ def invite_users(request) -> Tuple[str, int]:
         return "No CSV file or emails provided", 400
 
     queue_name = request_json.get("queue_name")
+    if not queue_name:
+        queue_name = "invite-user-task-queue"
+
+    if queue_name == "delete-user-task-queue":
+        failed_delete_users = []
+        for email in emails:
+            try:
+                user_response = user_service.get_user_by_email(email=email)
+                if user_response.status_code != 200:
+                    logger.error(
+                        'Failed to get user with email: "%s", error: %s'
+                        % (email, user_response.text)
+                    )
+                    failed_delete_users.append(email)
+                    continue
+                user_id = user_response.json()["users"][0]["id"]
+                delete_response = user_service.delete_user(user_id=user_id)
+                if "error" in delete_response:
+                    failed_delete_users.append(email)
+            except Exception as error:
+                logger.error(error)
+                failed_delete_users.append(email)
+        if failed_delete_users:
+            logger.error("Failed to delete some users: {}", failed_delete_users)
+            for email in failed_delete_users:
+                save_errors(
+                    rest_service=rest_service,
+                    table="failed_invites",
+                    data=email,
+                    error="Failed to delete some users",
+                )
+            return "Failed to delete some users: {}".format(failed_delete_users), 500
+        return "Success", 200
 
     emails_with_errors = []
     for email in emails:
@@ -132,7 +168,7 @@ def invite_users(request) -> Tuple[str, int]:
             "email": email,
             "company_id": request_json.get("company_id") or data["company_id"],
             "company_name": request_json.get("company_name") or data["company_name"],
-            "role": "user",
+            "role": request_json.get("role") or "user",
         }
         task = create_task(payload=payload, queue_name=queue_name)
         if not task:
@@ -143,5 +179,12 @@ def invite_users(request) -> Tuple[str, int]:
         return "Failed to invite all users", 500
     elif emails_with_errors:
         logger.error("Failed to invite some users: {}", emails_with_errors)
+        for email in emails_with_errors:
+            save_errors(
+                rest_service=rest_service,
+                table="failed_invites",
+                data=email,
+                error="Failed to invite some users",
+            )
         return "Failed to invite some users: {}".format(emails_with_errors), 500
     return "Success", 200

@@ -15,6 +15,15 @@ class AdminUserService:
             "Authorization": f"Bearer {self.service_key}",
         }
 
+    def get_user_by_email(self, email: str):
+        """Get a user by their email"""
+        response = requests.get(
+            f"{self.base_url}/auth/v1/admin/users?email={email}",
+            headers=self.headers,
+            timeout=5,
+        )
+        return response
+    
     def get_user_by_id(self, user_id: str):
         """Get a user by their user_id"""
         response = requests.get(
@@ -91,3 +100,26 @@ class AdminUserService:
         if user_metadata.get("role") != "super_admin":
             return {"error": "User is not a super admin"}
         return user_metadata
+
+
+if __name__ == "__main__":
+    from exp_invite import base_url, anon_key, service_role_key
+
+    admin_user_service = AdminUserService(
+        base_url=base_url, anon_key=anon_key, service_key=service_role_key
+    )
+    # try:
+    #     response = admin_user_service.delete_user(
+    #         "e0a0a0a0-0a0a-0a0a-0a0a-0a0a0a0a0a0a"
+    #     )
+    #     print(response.status_code)
+    # except Exception as e:
+    #     print(e)
+    
+    # get user by email
+    try:
+        response = admin_user_service.get_user_by_email("st.test@icloud.com")
+        print(response.status_code)
+        print(response.json()['users'][0]['id'])
+    except Exception as e:
+        print(e)
