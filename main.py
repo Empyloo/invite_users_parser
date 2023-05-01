@@ -128,8 +128,6 @@ def invite_users(request) -> Tuple[str, int]:
         return "No CSV file or emails provided", 400
 
     queue_name = request_json.get("queue_name")
-    if not queue_name:
-        queue_name = "invite-user-task-queue"
 
     if queue_name == "delete-user-task-queue":
         failed_delete_users = []
@@ -161,30 +159,32 @@ def invite_users(request) -> Tuple[str, int]:
                 )
             return "Failed to delete some users: {}".format(failed_delete_users), 500
         return "Success", 200
+    elif queue_name == "invite-user-task-queue":
+        emails_with_errors = []
+        for email in emails:
+            payload = {
+                "email": email,
+                "company_id": request_json.get("company_id") or data["company_id"],
+                "company_name": request_json.get("company_name") or data["company_name"],
+                "role": request_json.get("role") or "user",
+            }
+            task = create_task(payload=payload, queue_name=queue_name)
+            if not task:
+                emails_with_errors.append(email)
 
-    emails_with_errors = []
-    for email in emails:
-        payload = {
-            "email": email,
-            "company_id": request_json.get("company_id") or data["company_id"],
-            "company_name": request_json.get("company_name") or data["company_name"],
-            "role": request_json.get("role") or "user",
-        }
-        task = create_task(payload=payload, queue_name=queue_name)
-        if not task:
-            emails_with_errors.append(email)
-
-    if len(emails) == len(emails_with_errors):
-        logger.error("Failed to invite all users")
-        return "Failed to invite all users", 500
-    elif emails_with_errors:
-        logger.error("Failed to invite some users: {}", emails_with_errors)
-        for email in emails_with_errors:
-            save_errors(
-                rest_service=rest_service,
-                table="failed_invites",
-                data=email,
-                error="Failed to invite some users",
-            )
-        return "Failed to invite some users: {}".format(emails_with_errors), 500
-    return "Success", 200
+        if len(emails) == len(emails_with_errors):
+            logger.error("Failed to invite all users")
+            return "Failed to invite all users", 500
+        elif emails_with_errors:
+            logger.error("Failed to invite some users: {}", emails_with_errors)
+            for email in emails_with_errors:
+                save_errors(
+                    rest_service=rest_service,
+                    table="failed_invites",
+                    data=email,
+                    error="Failed to invite some users",
+                )
+            return "Failed to invite some users: {}".format(emails_with_errors), 500
+        return "Success", 200
+    else:
+        return "Invalid queue name", 400

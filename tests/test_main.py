@@ -90,7 +90,10 @@ def test_invite_users_valid_request(
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
-    mock_request.get_json.return_value = {"emails": ["test@email.com"]}
+    mock_request.get_json.return_value = {
+        "emails": ["test@email.com"],
+        "queue_name": "invite-user-task-queue",
+    }
     mock_app_metadata = {
         "company_id": "test-company-id",
         "company_name": "test-company-name",
@@ -238,7 +241,10 @@ def test_invite_users_create_task_called_with_correct_payload(
 ):
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
-    mock_request.get_json.return_value = {"emails": ["invited@email.com"]}
+    mock_request.get_json.return_value = {
+        "emails": ["invited@email.com"],
+        "queue_name": "invite-user-task-queue",
+    }
     mock_app_metadata = {
         "company_id": "test-company-id",
         "company_name": "test-company-name",
@@ -256,7 +262,7 @@ def test_invite_users_create_task_called_with_correct_payload(
             "company_name": "test-company-name",
             "role": "user",
         },
-        "queue_name": 'invite-user-task-queue',
+        "queue_name": "invite-user-task-queue",
     }
 
 
@@ -273,7 +279,8 @@ def test_invite_users_failed_to_invite_all_users(
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
     mock_request.get_json.return_value = {
-        "emails": ["test@email.com", "test2@email.com"]
+        "emails": ["test@email.com", "test2@email.com"],
+        "queue_name": "invite-user-task-queue",
     }
     mock_app_metadata = {
         "company_id": "test-company-id",
@@ -300,7 +307,8 @@ def test_invite_users_failed_to_invite_some_users(
     mock_request = Mock()
     mock_request.headers = {"Authorization": "valid-token"}
     mock_request.get_json.return_value = {
-        "emails": ["test@email.com", "test2@email.com"]
+        "emails": ["test@email.com", "test2@email.com"],
+        "queue_name": "invite-user-task-queue",
     }
     mock_app_metadata = {
         "company_id": "test-company-id",
